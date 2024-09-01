@@ -14,6 +14,7 @@ A typical ThinkPad trackpoint is a PS/2 device (so are most touchpads). It has 8
 * Components: 6-row keyboard, trackpoint, 3 buttons, backlight.
 * Interface: 0.5-mm pitch 20-pin FPC for the trackpoint and backlight; 0.5-mm pitch 32-pin FPC for the keys and buttons.
 
+#### Trackpoint
 Many ThinkPad trackpoints use TPM754 chip. The IC on this one is unmarked but it has the same number of pins and layout. So I suspect it's also a TPM754, or at least it's pin compatible.
 
 This trackpoint's controller PCB is connected with the trackpoint with 4 solder points. One of them must be ground, another Vcc, and two for data for x and y axis. Ground is almost certainly shared with the controller, Vcc is probably not, since it could be regulated.
@@ -33,9 +34,52 @@ There's no reason why IBM (and later Lenovo) would deviate from this implementat
 
 ![04Y0819](04Y0819-pinout.jpeg)
 
-After connecting it to an Arduino UNO, wiring up the reset curcit (more on this later), and loading my test sketch, it worked perfectly.
+After connecting it to an Arduino UNO, wiring up the reset circuit (more on this later), and loading my test sketch, it worked perfectly.
 
 There are many PS/2 libraries out there. I have written one myself for another project. I also wrote a [test sketch](https://github.com/delingren/ps2_mouse_test) specifically for testing the basic functionality of a PS/2 mouse. Upon booting, it resets the PS/2 mouse and enables it by issuing a series of PS/2 commands. If the data and clock pins are not correctly connected, it'd wait indefinitely for the device to respond. If all pins are correctly connected and the PS/2 device is functional, the sketch listens to the packets sent by the device, parse them, and prints the content on the serial console. The content includes coordianate diff in x and y directions and button states.
+
+#### Keyboard Matrix
+
+```
+    | W21   | W24   | W32   | W27   | W25   | W28   | W30   | W31   | W04   |
+----+-------+-------+-------+-------+-------+-------+-------+-------+-------|
+W26 | ESC   |  ~    | Tab   | 1     | Q     | A     | Z     |       |       | row 0
+W20 |       | F1    | Caps  | 2     | W     | S     | X     |       |       | row 1
+W22 | F4    | F2    | F3    | 3     | E     | D     | C     |       |       | row 2
+W10 | F5    | F9    | BS    | F10   |       | \     | Enter | Space |       | row 3
+W16 | F6    | =     | ]     | 8     | I     | K     | ,     |       |       | row 4
+W18 |       | F8    | F7    | 9     | O     | L     | .     |       |       | row 5
+W11 |       | Home  |       | F11   |       |       |       | Down  |       | row 6
+W13 |       |       | GUI   | F12   |       |       |       | Right |       | row 7
+W12 | Up    |       |       | End   |       |       |       | Left  |       | row 8
+W09 |       | Del   |       | Ins   |       | PrtSc | PgUp  | PgDn  |       | row 9
+W19 | G     | 5     | T     | 4     | R     | F     | V     | B     |       | row 10
+W23 | H     | 6     | Y     | 7     | U     | J     | M     | N     |       | row 11
+W17 | '     | -     | [     | 0     | P     | ;     |       | /     |       | row 12
+W29 |       |       | LShft |       |       |       | RShft |       |       | row 13
+W15 |       | LCtrl |       |       |       |       | RCtrl |       |       | row 14
+W14 | LAlt  |       |       |       |       |       |       | RAlt  |       | row 15
+W03 |       |       |       |       |       |       |       |       | Fn    | row 16
+----+-------+-------+-------+-------+-------+-------+-------+-------+-------|
+      col 0   col 1   col 2   col 3   col 4   col 5   col 6   col 7   col 8
+```
+
+Mouse buttons:
+```
+   | W5 | W6 | W7 |
+---+----+----+----|
+W8 | R  | M  | L  |
+---+----+----+----|
+```
+
+Pins 1 and 2 are either not connected or used for identifying keyboard layout (ANSI, ISO, JIS). Mouse button wires will be connected to the trackpoint. 
+
+Now let's do a tally on the GPIO pins. The key matrix uses 26 pins. The trackpoint uses 2 pins. The backlight uses another one. One more for caps lock indicator. So the total is 30. I was originally considering a Pi Pico. RP2040 has exactly 30 GPIO pins. But Pi Pico only exposes 26. I have a few options.
+
+* Try to reduce the number of pins. The `Fn` key is its own row and column, which is not necessary. As long as it's its own row *or* column, ghosting is not going to happen. So, I *could* cut it down by 1. If I let go the backlight and caps lock indicator, I'm still short by one.
+* Try to expose more pins on the Pi Pico. An obvious candidate is the LED (GPIO25). [This post](https://www.hackster.io/news/this-raspberry-pi-pico-hack-unlocks-two-extra-hidden-gpio-pins-and-potentially-a-couple-more-aee23753281b.amp) mentioned another 3. But it looks a bit finicky to do the surgery.
+* I found this board called [Olimex RP2040-PICO30](https://www.olimex.com/Products/MicroPython/RP2040-PICO30/open-source-hardware) that exposes all 30 GPIO pins of the RP2040. But I can't seem to source it from North America. And shipping from EU is ridiculous.
+* Try use a different MCU. Some research led me to WeAct STM32 F405 or F411. F411 has 32 pins. But the BOOT button uses one, and the USB connector uses 2. So I'm still short by one. So F405 it is. Some [additional config](https://github.com/drashna/qmk_firmware/blob/custom_drashna/keyboards/handwired/tractyl_manuform/5x6_right/f405/mcuconf.h#L21-L33) is needed though.
 
 ### Keyboard 2
 * Part number: 01YP160
