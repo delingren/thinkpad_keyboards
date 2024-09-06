@@ -3,6 +3,8 @@
 ## Goal
 Make standalone USB keyboards with trackpoints out of ThinkPad keyboards. The results are similar to an [SK-8845](https://www.lenovo.com/us/en/p/accessories-and-software/keyboards-and-mice/keyboards/0b47190).
 
+[Keyboard 2](x390.md)
+
 ## Reverse Engineering
 The following documents how I reverse engineered the pinout of the trackpoints and the matrices of the keyboards. If anyone reading this is only interested in the end result take a look at the pictures and skip the text.
 
@@ -56,7 +58,7 @@ And it worked perfectly. With an 100 Ω current limiting resistor, I measured ~1
 ```
     | W21   | W24   | W32   | W27   | W25   | W28   | W30   | W31   | W04   |
 ----+-------+-------+-------+-------+-------+-------+-------+-------+-------|
-W26 | ESC   |  ~    | Tab   | 1     | Q     | A     | Z     |       |       | row 0
+W26 | ESC   | ~     | Tab   | 1     | Q     | A     | Z     |       |       | row 0
 W20 |       | F1    | Caps  | 2     | W     | S     | X     |       |       | row 1
 W22 | F4    | F2    | F3    | 3     | E     | D     | C     |       |       | row 2
 W10 | F5    | F9    | BS    | F10   |       | \     | Enter | Space |       | row 3
@@ -73,7 +75,7 @@ W29 |       |       | LShft |       |       |       | RShft |       |       | ro
 W15 |       | LCtrl |       |       |       |       | RCtrl |       |       | row 14
 W14 | LAlt  |       |       |       |       |       |       | RAlt  |       | row 15
 W03 |       |       |       |       |       |       |       |       | Fn    | row 16
-----+-------+-------+-------+-------+-------+-------+-------+-------+-------|
+----+-------+-------+-------+-------+-------+-------+-------+-------+-------+
       col 0   col 1   col 2   col 3   col 4   col 5   col 6   col 7   col 8
 ```
 
@@ -82,7 +84,7 @@ Mouse buttons:
    | W5 | W6 | W7 |
 ---+----+----+----|
 W8 | R  | M  | L  |
----+----+----+----|
+---+----+----+----+
 ```
 
 Pins 1 and 2 are either not connected or used for identifying keyboard layout (ANSI, ISO, JIS). Mouse button wires will be connected to the trackpoint. 
@@ -101,19 +103,9 @@ So the total is 30. I was originally considering a Pi Pico. RP2040 has exactly 3
 * Try to expose more pins on the Pi Pico. An obvious candidate is the LED (GPIO25). [This post](https://www.hackster.io/news/this-raspberry-pi-pico-hack-unlocks-two-extra-hidden-gpio-pins-and-potentially-a-couple-more-aee23753281b.amp) mentioned another 3. But it looks a bit finicky to do the surgery.
 * I found this board called [Olimex RP2040-PICO30](https://www.olimex.com/Products/MicroPython/RP2040-PICO30/open-source-hardware) that exposes all 30 GPIO pins of the RP2040. But I can't seem to source it from North America. And shipping from EU is ridiculous.
 * Use an I2C I/O expander. QMK has I2C support and provides hooks to support custom matrix scanning. But the code lives in the board's own space. It needs to be updated if the APIs change. I am a big fan of simplicity. So I'll try to avoid this option if possible. But if I do choose this option and use a 16 channel expander, I can use pretty much any MCU, since it effectively adds 14 pins.
-* Try use a different MCU. Some research led me to WeAct STM32 F405 or F411. F411 has 32 pins. But the BOOT button uses one, and the USB connector uses 2. So I'm still short by one. So F405 is by far the best option. Some [additional config](https://github.com/drashna/qmk_firmware/blob/custom_drashna/keyboards/handwired/tractyl_manuform/5x6_right/f405/mcuconf.h#L21-L33) is needed.
-
-<!-- ### Keyboard 2
-* Part number: 01YP160
-* Compatible with X390, X395, X280 (unconfirmed)
-* Components: 6-row keyboard, trackpoint, 3 buttons.
-* Interface: 1-mm pitch 12-pin FPC for the trackpoint; 0.5-mm pitch 36-pin FPC for the keys and buttons.
-
-This trackpoint doesn't use a TPM745 chip. So the prior knowledge doesn't apply here. We need to start from scatch. Again, ground is usually the easiest to find out. So here we go. A quick continuity test revealted that pin 7 is connected to the chasis and thus must be ground. Then I looked at the traces. Pin 1 has the thickest trace other than ground. So it's a good candidate for Vcc. From there, I turned into the big capacitors. A couple of them are connnected to ground on one end. And the other end of one is connected to pin 1. And pin 1 is also connected to a resistor (blocked by the golden FPC in the picture). So I'm pretty confident pin 1 is Vcc.
-
-With Vcc and ground correctly determined, there's little chance you'd fry the controller. So I hooked it up to an Arduino Uno using a FPC connector breakout board. A few trial and errors later, the data and clock pins were identified. Then I shorted the rest pins to ground one by one and observe the output to determine which pins are for the 3 buttons. After that, the remaining single pin must be reset.
-
-![01YP160](01YP160-pinout.jpeg) -->
+* Try use a different MCU. Some research led me to WeAct STM32 F405 or F411. F411 has 32 pins. But the BOOT button uses one, and the USB connector uses 2. So I'm still short by one. So F405 is by far the best option. Some [additional config](https://github.com/drashna/qmk_firmware/blob/custom_drashna/keyboards/handwired/tractyl_manuform/5x6_right/f405/mcuconf.h#L21-L33) is needed:
+  - https://github.com/drashna/qmk_firmware/blob/custom_drashna/keyboards/handwired/tractyl_manuform/5x6_right/f405/board.h
+  - https://github.com/drashna/qmk_firmware/blob/custom_drashna/keyboards/handwired/tractyl_manuform/5x6_right/f405/mcuconf.h#L17-L31
 
 ## Firmware
 I've always used QMK for keyboard projects. It's the most popular firmware in the mechanical keyboard community. It also has support for PS/2 pointing devices. So that's what I'm using. Another option is ZMK, which is the new kid on the block. I don't have experiences with it. PS/2 support in QMK is new to me, so I played with it a little bit with a few MCUs in my drawer:
