@@ -58,7 +58,7 @@ And it worked perfectly. With an 100 Ω current limiting resistor, I measured ~1
 ```
     | W21   | W24   | W32   | W27   | W25   | W28   | W30   | W31   | W04   |
 ----+-------+-------+-------+-------+-------+-------+-------+-------+-------|
-W26 | ESC   | ~     | Tab   | 1     | Q     | A     | Z     |       |       | row 0
+W26 | ESC   | `     | Tab   | 1     | Q     | A     | Z     |       |       | row 0
 W20 |       | F1    | Caps  | 2     | W     | S     | X     |       |       | row 1
 W22 | F4    | F2    | F3    | 3     | E     | D     | C     |       |       | row 2
 W10 | F5    | F9    | BS    | F10   |       | \     | Enter | Space |       | row 3
@@ -88,24 +88,6 @@ W8 | R  | M  | L  |
 ```
 
 Pins 1 and 2 are either not connected or used for identifying keyboard layout (ANSI, ISO, JIS). Mouse button wires will be connected to the trackpoint. 
-
-
-#### MCU selection
-The reverse engineering is now done. The next step is to find an suitable MCU. Let's do a tally on the GPIO pins:
-* The key matrix uses 26 pins. 
-* The trackpoint uses 2 pins. 
-* The backlight uses another one. 
-* One more for caps lock indicator. 
-
-So the total is 30. I was originally considering a Pi Pico. RP2040 has exactly 30 GPIO pins. But Pi Pico only exposes 26. I have a few options.
-
-* Try to reduce the number of pins. The `Fn` key is its own row and column, which is not necessary. As long as it has its own row *or* column, ghosting is not going to happen. So, I *could* cut the pin count down by 1. Even if I let go the backlight and caps lock indicator, I'm still short by one.
-* Try to expose more pins on the Pi Pico. An obvious candidate is the LED (GPIO25). [This post](https://www.hackster.io/news/this-raspberry-pi-pico-hack-unlocks-two-extra-hidden-gpio-pins-and-potentially-a-couple-more-aee23753281b.amp) mentioned another 3. But it looks a bit finicky to do the surgery.
-* I found this board called [Olimex RP2040-PICO30](https://www.olimex.com/Products/MicroPython/RP2040-PICO30/open-source-hardware) that exposes all 30 GPIO pins of the RP2040. But I can't seem to source it from North America. And shipping from EU is ridiculous.
-* Use an I2C I/O expander. QMK has I2C support and provides hooks to support custom matrix scanning. But the code lives in the board's own space. It needs to be updated if the APIs change. I am a big fan of simplicity. So I'll try to avoid this option if possible. But if I do choose this option and use a 16 channel expander, I can use pretty much any MCU, since it effectively adds 14 pins.
-* Try use a different MCU. Some research led me to WeAct STM32 F405 or F411. F411 has 32 pins. But the BOOT button uses one, and the USB connector uses 2. So I'm still short by one. So F405 is by far the best option. Some [additional config](https://github.com/drashna/qmk_firmware/blob/custom_drashna/keyboards/handwired/tractyl_manuform/5x6_right/f405/mcuconf.h#L21-L33) is needed:
-  - https://github.com/drashna/qmk_firmware/blob/custom_drashna/keyboards/handwired/tractyl_manuform/5x6_right/f405/board.h
-  - https://github.com/drashna/qmk_firmware/blob/custom_drashna/keyboards/handwired/tractyl_manuform/5x6_right/f405/mcuconf.h#L17-L31
 
 ## Firmware
 I've always used QMK for keyboard projects. It's the most popular firmware in the mechanical keyboard community. It also has support for PS/2 pointing devices. So that's what I'm using. Another option is ZMK, which is the new kid on the block. I don't have experiences with it. PS/2 support in QMK is new to me, so I played with it a little bit with a few MCUs in my drawer:
@@ -242,14 +224,68 @@ And here's `config.h`:
 // clang-format on
 ```
 
+#### MCU selection
+The reverse engineering is now done. The next step is to find a suitable MCU. Let's do a tally on the GPIO pins:
+* The key matrix uses 26 pins. 
+* The trackpoint uses 2 pins. 
+* The backlight uses another one. 
+* One more for caps lock indicator. 
+
+So the total is 30. I was originally considering a Pi Pico. RP2040 has exactly 30 GPIO pins. But Pi Pico only exposes 26. I have a few options.
+
+* Try to reduce the number of pins. The `Fn` key is its own row and column, which is not necessary. As long as it has its own row *or* column, ghosting is not going to happen. So, I *could* cut the pin count down by 1. Even if I let go the backlight and caps lock indicator, I'm still short by one.
+* Try to expose more pins on the Pi Pico. An obvious candidate is the LED (GPIO25). [This post](https://www.hackster.io/news/this-raspberry-pi-pico-hack-unlocks-two-extra-hidden-gpio-pins-and-potentially-a-couple-more-aee23753281b.amp) mentioned another 3. But it looks a bit finicky to do the surgery.
+* I found this board called [Olimex RP2040-PICO30](https://www.olimex.com/Products/MicroPython/RP2040-PICO30/open-source-hardware) that exposes all 30 GPIO pins of the RP2040. But I can't seem to source it from North America. And shipping from EU is ridiculous.
+* Use an I2C I/O expander. QMK has I2C support and provides hooks to support custom matrix scanning. But the code lives in the board's own space. It needs to be updated if the APIs change. I am a big fan of simplicity. So I'll try to avoid this option if possible. But if I do choose this option and use a 16 channel expander, I can use pretty much any MCU, since it effectively adds 14 pins.
+
+So, I have ruled out all MCUs I have in hand. Let's try a different MCU. Some research led me to WeAct STM32 F405 or F411. F411 has 32 pins. But the BOOT button uses one, and the USB connector uses 2. So I'm still short by one. So F405 is a good candidate. Some [additional config](https://github.com/drashna/qmk_firmware/blob/custom_drashna/keyboards/handwired/tractyl_manuform/5x6_right/f405/mcuconf.h#L21-L33) is needed:
+  - Configure high speed and low speed oscillators in [`board.h`](https://github.com/drashna/qmk_firmware/blob/custom_drashna/keyboards/handwired/tractyl_manuform/5x6_right/f405/board.h)
+  - Configure PLLs in [`mcuconf.h`](https://github.com/drashna/qmk_firmware/blob/custom_drashna/keyboards/handwired/tractyl_manuform/5x6_right/f405/mcuconf.h#L17-L31)
+
+While researching on F405, I also stumbled upon WeAct STM32G474, which seems to be a good candidate too. It lacks the TF card reader, compared with F405, which I prefer since I don't need it anyway. Its footprint is slightly smaller.
+
+#### Prototypinh with STM32G474
+STM32G474 is officially supporte by QMK but I couldn't find many examples. But from the two I found, it doesn't look like there's anything special about it. The only thing to look out for seems to be the backlight pin. If the backlight needs to be dimmed, it needs to be controlled by a PWM or timer pin. STM32 processors have multiple timers and channels. A PWM pin can be controlled by a timer and a channel. It's documented [here](https://docs.qmk.fm/features/backlight#arm-configuration). The exact values can be determined by looking up Table 13 in the datasheet. WeAct STM32G474 board exposes the following pins.
+
+PB11, PB10, PB2,  PB1,  PB0, PC4, PA7,  PA6,  PA5,  PA4,  PA3,  PA2,  PA1,  PA0,  PC15, PC14, PC13
+PB13, PB12, PB15, PB14, PA8, PC6, PA10, PA9,  PA12, PA11, PC10, PA15, PB3,  PC11, PB5,  PB4,  PB7,  PB6,  PB9,  PB8
+
+There are some caveats about the pins. Not all of them can be used. After consulting the datasheet and schematics, here's a partial list:
+
+* PA11 & PA12: used as D+ and D- in USB.
+* PC14 & PC15: used by the oscillator.
+* PC6 : onboard LED. should be good for the caps lock indicator though.
+* PB8: Boot0.
+
+The rest should be good to use. However, when I tested, although `B4` and `B6` work, they fire randomly when I touch `A9` and `A10`. This might have something to do with the solder bridges `SB3` and `SB4`, although touching `B4` and `B6` doesn't seem to affect the other two. So I'm not entirely sure. Using these pins to control the backlight seems fine though.
+
+Pin assignment
+
+`C6`: Caps lock indicator
+`B4`: Backlight
+`B10`: PS2 clock
+`B11`: PS2 data
+
+Row pins and wire #s:
+```
+W26 W20 W22 W10 W16 W18 W11 W13 W12 W09 W19 W23 W17 W29 W15 W14 W03
+B2  B1  B0  C4  A7  A6  A5  A4  A3  A2  A1  A0  C13 B13 B12 B15 B14
+```
+
+Column pins and wire #s:
+```
+W21 W24 W32 W27 W25 W28 W30 W31 W04
+B9  B7  B5  B3  A10 A9  C11 C10 A15
+```
+
 ## Hardware Interface
+For the track point, I cut off the FPC and soldered wires directly on the PCB. The whole backlight assemly is integrated with the FPC so I can't do something similar. Instead, I soldered 3 wires on the contacts on the end. They are 0.5mm pitch so it required a lot of patience and steady hands to solder three wires. For the keyboard connector, I used a connector.
+
 The keys are straight-forward. The matrix pins are connected to GPIO pins of the MCU.
 
-The trackpoint is not complicated either. The button pins need to be properly wired; data and clock pins are connected to GPIO pins (more in the next section); The trackpoints seem to be able to handle both 3.3 volts and 5 volts. The voltage selection should then be dictated by the MCU.
+The trackpoint is not complicated either. The button pins need to be properly wired; data and clock pins are connected to GPIO pins (more in the next section); The trackpoints seem to be able to handle both 3.3 volts and 5 volts. So I'm powering it up the 3.3V output of the dev board. Not all pins are 5V tolerant.
 
 One issue worth mentioning is, the reset wire needs to be pulsed high during boot. During prototyping, I initially failed to realize this. One of the trackpoints worked but the other one failed 90% of the time. Then I realized the mistake when I was reading about Frank Adam's project. See references 2. This can be found in TPM754's datasheet, in the reference shcematic. The one that worked must be the one not using TPM754. 
-
-For the physical connection, I bought some 0.5 mm and 1 mm FPC connector breakout boards from AliExpress. 
 
 ## References
 
