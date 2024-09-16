@@ -3,7 +3,9 @@
 ## Goal
 Make standalone USB keyboards with trackpoints out of ThinkPad keyboards. The results are similar to an [SK-8845](https://www.lenovo.com/us/en/p/accessories-and-software/keyboards-and-mice/keyboards/0b47190).
 
-[Keyboard 2](x390.md)
+I'm working on a few ThinkPad keyboards, fucusing on one in this post. The rest keyboards are linked below.
+
+* [Keyboard 2: X390, X395, and X280](x390.md)
 
 ## Reverse Engineering
 The following documents how I reverse engineered the pinout of the trackpoints and the matrices of the keyboards. If anyone reading this is only interested in the end result take a look at the pictures and skip the text.
@@ -285,7 +287,7 @@ The keys are straight-forward. The matrix pins are connected to GPIO pins of the
 
 The trackpoint is not complicated either. The button pins need to be properly wired; data and clock pins are connected to GPIO pins (more in the next section); The trackpoints seem to be able to handle both 3.3 volts and 5 volts. So I'm powering it up the 3.3V output of the dev board. Not all pins are 5V tolerant.
 
-One issue worth mentioning is, the reset wire needs to be pulsed high during boot. During prototyping, I initially failed to realize this. One of the trackpoints worked but the other one failed 90% of the time. Then I realized the mistake when I was reading about Frank Adam's project. See references 2. This can be found in TPM754's datasheet, in the reference shcematic. The one that worked must be the one not using TPM754. 
+One issue worth mentioning is, the reset wire needs to be pulsed high during boot. During prototyping, I initially failed to realize this. One of the trackpoints worked but the other one failed 90% of the time. Then I realized the mistake when I was reading about Frank Adams' project. See references 2. This can be found in TPM754's datasheet, in the reference shcematic. The one that worked must be the one not using TPM754. 
 
 ## References
 
