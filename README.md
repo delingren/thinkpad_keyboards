@@ -103,7 +103,7 @@ The fromer two are based on ATMega32U4. The latter two are based on RP2040. On A
 
 So I did some prototyping on both chips following the instructions from [QMK docs](https://docs.qmk.fm/features/ps2_mouse). The prototype is a keyboard definition that has just one key and a PS/2 pointing device.
 
-With Teensy, I set clock pin to D5 and data pin to D2 and it worked with both usart and interrupt drivers. With ProMicro, I set clock pin to D2 and data pin to D3 and it worked with the interrupt driver. Initially, I couldn't get ProMicro to work. But it did after tearing apart the breakboard and reconnecting everything. It was probably a bad connection.
+With Teensy, I set clock pin to D5 and data pin to D2 and it worked with both usart and interrupt drivers. With ProMicro, I set clock pin to D2 and data pin to D3 and it worked with the interrupt driver. Initially, I couldn't get ProMicro to work. But it did after tearing apart the breadboard and reconnecting everything. It was probably a bad connection.
 
 For RP2040, QMK uses RP2040's PIO to drive PS/2. All these combinations worked as expected. This gives me plenty of options to work with.
 
@@ -249,10 +249,12 @@ While researching on F405, I also stumbled upon WeAct STM32G474, which seems to 
 #### Prototypinh with STM32G474
 STM32G474 is officially supporte by QMK but I couldn't find many examples. But from the two I found, it doesn't look like there's anything special about it. The only thing to look out for seems to be the backlight pin. If the backlight needs to be dimmed, it needs to be controlled by a PWM or timer pin. STM32 processors have multiple timers and channels. A PWM pin can be controlled by a timer and a channel. It's documented [here](https://docs.qmk.fm/features/backlight#arm-configuration). The exact values can be determined by looking up Table 13 in the datasheet. WeAct STM32G474 board exposes the following pins.
 
+```
 PB11, PB10, PB2,  PB1,  PB0, PC4, PA7,  PA6,  PA5,  PA4,  PA3,  PA2,  PA1,  PA0,  PC15, PC14, PC13
 PB13, PB12, PB15, PB14, PA8, PC6, PA10, PA9,  PA12, PA11, PC10, PA15, PB3,  PC11, PB5,  PB4,  PB7,  PB6,  PB9,  PB8
+```
 
-There are some caveats about the pins. Not all of them can be used. After consulting the datasheet and schematics, here's a partial list:
+There are some caveats about the pins. Not all of them can be used. After consulting the datasheet and schematics, here's a (probably incomplete) list:
 
 * PA11 & PA12: used as D+ and D- in USB.
 * PC14 & PC15: used by the oscillator.
