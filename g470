@@ -1,0 +1,28 @@
+## Keyboard Info
+This one does not have a TrackPoint, the red nub. According to the eBay listing,
+it fits these models: B470, B475, G470, G475, V470, B490, M490, M495, B480, V480.
+
+## Keyboard Matrix
+
+```
+    | W13   | W20   | W16   | W19   | W24   | W17   | W23   | W22   |
+----+-------+-------+-------+-------+-------+-------+-------+-------|
+W18 | Esc   | A     | `     | 1     | Tab   | Q     |       | Z     | 00
+W12 |       | S     | F1    | 2     | Caps  | W     |       | X     | 01
+W14 | F4    | D     | F2    | 3     | F3    | E     |       | C     | 02
+W11 | G     | F     | 5     | 4     | T     | R     | B     | V     | 03
+W15 | H     | J     | 6     | 7     | Y     | U     | N     | M     | 04
+W08 | F6    | K     | =     | 8     | ]     | I     |       | ,     | 05
+W10 |       | L     | F8    | 9     | F7    | O     |       | .     | 06
+W09 | '     | ;     | -     | 0     | [     | P     | /     |       | 07
+W02 | F5    | \     | F9    | F10   | BS    |       | Space | Enter | 08
+W03 |       |       |       | F11   |       |       | Down  |       | 09
+W04 | Up    | Fn    | Home  | PgDn  |       |       | Left  | Del   | 10
+W05 |       |       |       | F12   |       |       | Right |       | 11
+W01 |       | Menu  | End   | PgUp  |       | GUI   |       |       | 12
+W21 |       |       |       |       | LShft |       |       | RShft | 13
+W07 |       |       | LCtrl |       |       |       |       | RCtrl | 14
+W06 | LAlt  |       |       | PrtSc |       |       | RAlt  |       | 15
+----+-------+-------+-------+-------+-------+-------+-------+-------+
+        0       1       2       3       4       5       6       7   
+```
